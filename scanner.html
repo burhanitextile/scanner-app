@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Barcode Scanner Test</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <script src="https://unpkg.com/html5-qrcode"></script>
+
+  <style>
+    body {
+      font-family: Arial;
+      text-align: center;
+      background: #f4f6f8;
+      padding: 20px;
+    }
+
+    #reader {
+      width: 300px;
+      margin: auto;
+    }
+
+    input {
+      margin-top: 15px;
+      padding: 10px;
+      width: 80%;
+      font-size: 16px;
+    }
+
+    button {
+      padding: 10px 15px;
+      font-size: 16px;
+      margin-top: 10px;
+      border: none;
+      background: #3498db;
+      color: white;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+
+<body>
+
+<h2>Scan Curtain Code</h2>
+
+<div id="reader"></div>
+
+<input type="text" id="result" placeholder="Scanned code will appear here">
+
+<br>
+<button onclick="startScanner()">Start Scanner</button>
+
+<script>
+function startScanner() {
+  const html5QrCode = new Html5Qrcode("reader");
+
+  html5QrCode.start(
+    { facingMode: "environment" },
+    {
+      fps: 10,
+      qrbox: 250
+    },
+    (decodedText) => {
+      document.getElementById("result").value = decodedText;
+      html5QrCode.stop(); // stop after scan
+    },
+    (errorMessage) => {
+      // ignore errors
+    }
+  ).catch(err => {
+    alert("Camera error: " + err);
+  });
+}
+</script>
+
+</body>
+</html>
