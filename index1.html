@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Burhani Textile Inventory</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f6f8;
+      margin: 0;
+    }
+    header {
+      background: linear-gradient(90deg, #2c3e50, #3498db);
+      color: white;
+      padding: 15px;
+      text-align: center;
+    }
+    h1 { margin: 0; }
+    .container {
+      padding: 20px;
+      max-width: 900px;
+      margin: auto;
+    }
+    .card {
+      background: white;
+      padding: 15px;
+      margin-bottom: 15px;
+      border-radius: 10px;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+      border-left: 4px solid #3498db;
+    }
+    input, button {
+      padding: 10px;
+      margin: 5px 0;
+      width: 100%;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+    input:focus {
+      outline: none;
+      border-color: #3498db;
+    }
+    button {
+      background: #3498db;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+    button:hover { background: #2980b9; }
+    .summary {
+      background: #ecf0f1;
+      padding: 10px;
+      border-radius: 5px;
+      margin-top: 10px;
+    }
+    .highlight {
+      color: #2c3e50;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>Burhani Textile</h1>
+  <p>Inventory Management System</p>
+</header>
+
+<div class="container">
+
+  <div class="card">
+    <h3>Scan Barcode</h3>
+    <div id="reader"></div>
+    <button onclick="startScanner()">Start Scanner</button>
+  </div>
+
+  <div class="card">
+    <h3>Search Item</h3>
+    <input id="searchCode" placeholder="Enter or Scan Code">
+    <button onclick="searchItem()">Search</button>
+    <div id="searchResult" class="summary"></div>
+  </div>
+
+  <div class="card">
+    <h3>Add / Update Item</h3>
+    <input id="code" placeholder="Enter or Scan Code">
+    <input id="qty" type="number" placeholder="Quantity">
+    <button onclick="addItem()">Add / Update</button>
+  </div>
+
+  <div class="card">
+    <h3>Sell Item</h3>
+    <input id="sellCode" placeholder="Enter Code">
+    <input id="sellQty" type="number" placeholder="Units Sold">
+    <button onclick="sellItem()">Sell</button>
+  </div>
+
+  <div class="card">
+    <h3>Inventory Summary</h3>
+    <button onclick="showInventory()">Show Inventory</button>
+    <div id="inventory" class="summary"></div>
+  </div>
+
+  <div class="card">
+    <h3>Sales Summary</h3>
+    <button onclick="showSales()">Show Sales</button>
+    <div id="sales" class="summary"></div>
+  </div>
+
+</div>
+
+<script>
+let inventory = JSON.parse(localStorage.getItem("inventory")) || {};
+let sales = JSON.parse(localStorage.getItem("sales")) || {};
+
+function saveData() {
+  localStorage.setItem("inventory", JSON.stringify(inventory));
+  localStorage.setItem("sales", JSON.stringify(sales));
+}
+
+function addItem() {
+  let code = document.getElementById("code").value;
+  let qty = parseInt(document.getElementById("qty").value);
+
+  if (!code || !qty) return alert("Fill all fields");
+
+  if (!inventory[code]) {
+    inventory[code] = { category: "General", qty: 0 };
+  }
+
+  inventory[code].qty += qty;
+  saveData();
+  alert("Item updated");
+}
+
+function sellItem() {
+  let code = document.getElementById("sellCode").value;
+  let qty = parseInt(document.getElementById("sellQty").value);
+
+  if (!inventory[code]) return alert("Item not found");
+  if (inventory[code].qty < qty) return alert("Not enough stock");
+
+  inventory[code].qty -= qty;
+
+  if (!sales[code]) {
+    sales[code] = { category: inventory[code].category, sold: 0 };
+  }
+
+  sales[code].sold += qty;
+  saveData();
+  alert("Sold successfully");
+}
+
+function searchItem() {
+  let code = document.getElementById("searchCode").value;
+  let result = document.getElementById("searchResult");
+
+  if (!inventory[code]) {
+    result.innerHTML = "Item not found";
+    return;
+  }
+
+  result.innerHTML = "<span class='highlight'>Category:</span> " + inventory[code].category +
+    "<br><span class='highlight'>Available Qty:</span> " + inventory[code].qty;
+}
+
+function showInventory() {
+  let output = "";
+  let total = 0;
+
+  for (let code in inventory) {
+    output += code + " | " + inventory[code].category + " | Qty: " + inventory[code].qty + "<br>";
+    total += inventory[code].qty;
+  }
+
+  output += "<br><b>Total Units: " + total + "</b>";
+  document.getElementById("inventory").innerHTML = output;
+}
+
+function showSales() {
+  let output = "";
+  let total = 0;
+
+  for (let code in sales) {
+    output += code + " | " + sales[code].category + " | Sold: " + sales[code].sold + "<br>";
+    total += sales[code].sold;
+  }
+
+  output += "<br><b>Total Sold: " + total + "</b>";
+  document.getElementById("sales").innerHTML = output;
+}
+
+function startScanner() {
+  const scanner = new Html5Qrcode("reader");
+  scanner.start(
+    { facingMode: "environment" },
+    { fps: 10, qrbox: 250 },
+    (decodedText) => {
+      document.getElementById("code").value = decodedText;
+      document.getElementById("searchCode").value = decodedText;
+      document.getElementById("sellCode").value = decodedText;
+      scanner.stop();
+    }
+  );
+}
+</script>
+
+</body>
+</html>
